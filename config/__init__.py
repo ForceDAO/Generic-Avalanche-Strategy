@@ -1,7 +1,7 @@
 ## Ideally, they have one file with the settings for the strat and deployment
 ## This file would allow them to configure so they can test, deploy and interact with the strategy
 
-BADGER_DEV_MULTISIG = "0xb65cef03b9b89f99517643226d76e286ee999e77"
+BADGER_DEV_MULTISIG = "0xccee4a893D5D97829008AF8Bee5b7169176bEE5a"
 
 WANT = "0xba09679ab223c6bdaf44d45ba2d7279959289ab0"  ## Dai/AVAX Pangolin LP
 STAKING = "0x63A84F66b8c90841Cb930F2dC3D28799F0c6657B"  ## Dai/AVAX Pangolin LP Staking Contract

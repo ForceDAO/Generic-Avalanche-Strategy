@@ -19,8 +19,7 @@ def test_deploy_settings(deployed):
 
     ## NOTE: Change based on how you set your contract
     assert protected_tokens[0] == WANT
-    assert protected_tokens[1] == STAKING
-    assert protected_tokens[2] == REWARD_TOKEN
+    assert protected_tokens[1] == REWARD_TOKEN
 
     assert strategy.governance() == BADGER_DEV_MULTISIG
 

@@ -234,7 +234,11 @@ contract MyStrategy is BaseStrategy {
             _processPerformanceFees(earned);
 
         // Stake balance of want
-        stakingContract.stake(IERC20Upgradeable(want).balanceOf(address(this)));
+        uint256 wantBalance = IERC20Upgradeable(want).balanceOf(address(this));
+        if (wantBalance > 0) {
+            stakingContract.stake(wantBalance);
+        }
+        
 
         /// @dev Harvest event that every strategy MUST have, see BaseStrategy
         emit Harvest(earned, block.number);
