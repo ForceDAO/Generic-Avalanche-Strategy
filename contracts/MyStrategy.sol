@@ -26,7 +26,8 @@ contract MyStrategy is BaseStrategy {
     address public reward; // Token we farm and swap to want / lpComponent
     IStakingRewards public stakingContract;
 
-    address public constant PANGOLIN_ROUTER = 0xE54Ca86531e17Ef3616d22Ca28b0D458b6C89106;
+    address public constant PANGOLIN_ROUTER =
+        0xE54Ca86531e17Ef3616d22Ca28b0D458b6C89106;
 
     address public constant WAVAX = 0xB31f66AA3C1e785363F0875A1B74E27b85FD66c7;
     address public constant DAI = 0xd586E7F844cEa2F87f50152665BCbc2C279D8d70;
@@ -75,13 +76,22 @@ contract MyStrategy is BaseStrategy {
 
         /// @dev do one off approvals here
         IERC20Upgradeable(want).safeApprove(staking, type(uint256).max);
+        IERC20Upgradeable(reward).safeApprove(
+            PANGOLIN_ROUTER,
+            type(uint256).max
+        );
+        IERC20Upgradeable(WAVAX).safeApprove(
+            PANGOLIN_ROUTER,
+            type(uint256).max
+        );
+        IERC20Upgradeable(DAI).safeApprove(PANGOLIN_ROUTER, type(uint256).max);
     }
 
     /// ===== View Functions =====
 
     // @dev Specify the name of the strategy
     function getName() external pure override returns (string memory) {
-        return "AVAX-DAI.e-Pangolin-Strategy" ;
+        return "AVAX-DAI.e-Pangolin-Strategy";
     }
 
     // @dev Specify the version of the Strategy, for upgrades
@@ -170,7 +180,8 @@ contract MyStrategy is BaseStrategy {
         stakingContract.getReward();
 
         // Get rewards balance
-        uint256 rewardBalance = IERC20Upgradeable(reward).balanceOf(address(this));
+        uint256 rewardBalance =
+            IERC20Upgradeable(reward).balanceOf(address(this));
 
         if (rewardBalance > 0) {
             uint256 _half = rewardBalance.mul(5000).div(MAX_BPS);
@@ -180,13 +191,25 @@ contract MyStrategy is BaseStrategy {
             path[0] = reward;
             path[1] = WAVAX;
             path[2] = DAI;
-            IUniswapRouterV2(PANGOLIN_ROUTER).swapExactTokensForTokens(_half, 0, path, address(this), now);
+            IUniswapRouterV2(PANGOLIN_ROUTER).swapExactTokensForTokens(
+                _half,
+                0,
+                path,
+                address(this),
+                now
+            );
 
             // Swap rewarded PNG for WAVAX
             path = new address[](2);
             path[0] = reward;
             path[1] = WAVAX;
-            IUniswapRouterV2(PANGOLIN_ROUTER).swapExactTokensForTokens(rewardBalance.sub(_half), 0, path, address(this), now);
+            IUniswapRouterV2(PANGOLIN_ROUTER).swapExactTokensForTokens(
+                rewardBalance.sub(_half),
+                0,
+                path,
+                address(this),
+                now
+            );
 
             // Add liquidity for ibBTC-wBTC pool
             uint256 _wavaxIn = balanceOfToken(WAVAX);
