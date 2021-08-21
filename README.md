@@ -44,6 +44,17 @@ source venv/bin/activate
 pip install -r requirements.txt
 ```
 
+8. Run the following command to install the Avalanche main network:
+```
+brownie networks add Avalanche avax-avash2 host=https://api.avax.network/ext/bc/C/rpc chainid=43112 explorer=https://cchain.explorer.avax.network/
+```
+
+9. Run the following command to install the Avalanche fork network:
+```
+brownie networks import network-config.yaml
+```
+
+
 ## Basic Use
 
 To deploy the demo Badger Strategy in a development environment:
