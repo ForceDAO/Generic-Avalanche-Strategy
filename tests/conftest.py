@@ -8,7 +8,7 @@ from brownie import (
 from config import (
     BADGER_DEV_MULTISIG,
     WANT,
-    LP_COMPONENT,
+    STAKING,
     REWARD_TOKEN,
     PROTECTED_TOKENS,
     FEES,
@@ -71,7 +71,7 @@ def deployed():
 
     ## Set up tokens
     want = interface.IERC20(WANT)
-    lpComponent = interface.IERC20(LP_COMPONENT)
+    lpComponent = interface.IERC20(STAKING)
     rewardToken = interface.IERC20(REWARD_TOKEN)
 
     ## Wire up Controller to Strart
@@ -135,7 +135,7 @@ def want(deployed):
 
 @pytest.fixture
 def tokens():
-    return [WANT, LP_COMPONENT, REWARD_TOKEN]
+    return [WANT, STAKING, REWARD_TOKEN]
 
 
 ## Accounts ##

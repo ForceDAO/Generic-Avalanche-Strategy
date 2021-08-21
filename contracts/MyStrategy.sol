@@ -11,6 +11,9 @@ import "../deps/@openzeppelin/contracts-upgradeable/token/ERC20/SafeERC20Upgrade
 
 import "../interfaces/badger/IController.sol";
 
+import {IStakingRewards} from "../interfaces/uniswap/IStakingRewards.sol";
+import {IUniswapRouterV2} from "../interfaces/uniswap/IUniswapRouterV2.sol";
+
 import {BaseStrategy} from "../deps/BaseStrategy.sol";
 
 contract MyStrategy is BaseStrategy {
@@ -19,8 +22,14 @@ contract MyStrategy is BaseStrategy {
     using SafeMathUpgradeable for uint256;
 
     // address public want // Inherited from BaseStrategy, the token the strategy wants, swaps into and tries to grow
-    address public lpComponent; // Token we provide liquidity with
+    address public staking; // Token we provide liquidity with
     address public reward; // Token we farm and swap to want / lpComponent
+    IStakingRewards public stakingContract;
+
+    address public constant PANGOLIN_ROUTER = 0xE54Ca86531e17Ef3616d22Ca28b0D458b6C89106;
+
+    address public constant WAVAX = 0xB31f66AA3C1e785363F0875A1B74E27b85FD66c7;
+    address public constant DAI = 0xd586E7F844cEa2F87f50152665BCbc2C279D8d70;
 
     // Used to signal to the Badger Tree that rewards where sent to it
     event TreeDistribution(
@@ -29,6 +38,9 @@ contract MyStrategy is BaseStrategy {
         uint256 indexed blockNumber,
         uint256 timestamp
     );
+
+    uint256 public sl;
+    uint256 public constant MAX_BPS = 10000;
 
     function initialize(
         address _governance,
@@ -49,22 +61,27 @@ contract MyStrategy is BaseStrategy {
 
         /// @dev Add config here
         want = _wantConfig[0];
-        lpComponent = _wantConfig[1];
+        staking = _wantConfig[1];
         reward = _wantConfig[2];
 
         performanceFeeGovernance = _feeConfig[0];
         performanceFeeStrategist = _feeConfig[1];
         withdrawalFee = _feeConfig[2];
 
+        stakingContract = IStakingRewards(staking);
+
+        // Set default slippage value
+        sl = 10;
+
         /// @dev do one off approvals here
-        // IERC20Upgradeable(want).safeApprove(gauge, type(uint256).max);
+        IERC20Upgradeable(want).safeApprove(staking, type(uint256).max);
     }
 
     /// ===== View Functions =====
 
     // @dev Specify the name of the strategy
     function getName() external pure override returns (string memory) {
-        return "StrategyName";
+        return "AVAX-DAI.e-Pangolin-Strategy" ;
     }
 
     // @dev Specify the version of the Strategy, for upgrades
@@ -74,12 +91,17 @@ contract MyStrategy is BaseStrategy {
 
     /// @dev Balance of want currently held in strategy positions
     function balanceOfPool() public view override returns (uint256) {
-        return 0;
+        return stakingContract.balanceOf(address(this));
     }
 
     /// @dev Returns true if this strategy requires tending
     function isTendable() public view override returns (bool) {
-        return true;
+        return false;
+    }
+
+    /// @dev Balance of a certain token currently held in strategy positions
+    function balanceOfToken(address _token) public view returns (uint256) {
+        return IERC20Upgradeable(_token).balanceOf(address(this));
     }
 
     // @dev These are the tokens that cannot be moved except by the vault
@@ -89,17 +111,10 @@ contract MyStrategy is BaseStrategy {
         override
         returns (address[] memory)
     {
-        address[] memory protectedTokens = new address[](3);
+        address[] memory protectedTokens = new address[](2);
         protectedTokens[0] = want;
-        protectedTokens[1] = lpComponent;
-        protectedTokens[2] = reward;
+        protectedTokens[1] = reward;
         return protectedTokens;
-    }
-
-    /// ===== Permissioned Actions: Governance =====
-    /// @notice Delete if you don't need!
-    function setKeepReward(uint256 _setKeepReward) external {
-        _onlyGovernance();
     }
 
     /// ===== Internal Core Implementations =====
@@ -119,10 +134,16 @@ contract MyStrategy is BaseStrategy {
     /// @dev invest the amount of want
     /// @notice When this function is called, the controller has already sent want to this
     /// @notice Just get the current balance and then invest accordingly
-    function _deposit(uint256 _amount) internal override {}
+    function _deposit(uint256 _amount) internal override {
+        stakingContract.stake(_amount);
+    }
 
     /// @dev utility function to withdraw everything for migration
-    function _withdrawAll() internal override {}
+    function _withdrawAll() internal override {
+        // Call harvest to process any leftover rewards
+        harvest();
+        stakingContract.withdraw(balanceOfPool());
+    }
 
     /// @dev withdraw the specified amount of want, liquidate from lpComponent to want, paying off any necessary debt for the conversion
     function _withdrawSome(uint256 _amount)
@@ -130,16 +151,57 @@ contract MyStrategy is BaseStrategy {
         override
         returns (uint256)
     {
-        return _amount;
+        uint256 _totalWant = balanceOfPool();
+        // Due to rounding errors on the Controller, the amount may be slightly higher than the available amount in edge cases.
+        if (_amount > _totalWant) {
+            stakingContract.withdraw(_totalWant);
+        } else {
+            stakingContract.withdraw(_amount);
+        }
     }
 
     /// @dev Harvest from strategy mechanics, realizing increase in underlying position
-    function harvest() external whenNotPaused returns (uint256 harvested) {
+    function harvest() public whenNotPaused returns (uint256 harvested) {
         _onlyAuthorizedActors();
 
         uint256 _before = IERC20Upgradeable(want).balanceOf(address(this));
 
-        // Write your code here
+        // Get rewards
+        stakingContract.getReward();
+
+        // Get rewards balance
+        uint256 rewardBalance = IERC20Upgradeable(reward).balanceOf(address(this));
+
+        if (rewardBalance > 0) {
+            uint256 _half = rewardBalance.mul(5000).div(MAX_BPS);
+
+            // Swap rewarded PNG for DAI through WAVAX path
+            address[] memory path = new address[](3);
+            path[0] = reward;
+            path[1] = WAVAX;
+            path[2] = DAI;
+            IUniswapRouterV2(PANGOLIN_ROUTER).swapExactTokensForTokens(_half, 0, path, address(this), now);
+
+            // Swap rewarded PNG for WAVAX
+            path = new address[](2);
+            path[0] = reward;
+            path[1] = WAVAX;
+            IUniswapRouterV2(PANGOLIN_ROUTER).swapExactTokensForTokens(rewardBalance.sub(_half), 0, path, address(this), now);
+
+            // Add liquidity for ibBTC-wBTC pool
+            uint256 _wavaxIn = balanceOfToken(WAVAX);
+            uint256 _daiIn = balanceOfToken(DAI);
+            IUniswapRouterV2(PANGOLIN_ROUTER).addLiquidity(
+                WAVAX,
+                DAI,
+                _wavaxIn,
+                _daiIn,
+                _wavaxIn.mul(sl).div(MAX_BPS),
+                _daiIn.mul(sl).div(MAX_BPS),
+                address(this),
+                now
+            );
+        }
 
         uint256 earned =
             IERC20Upgradeable(want).balanceOf(address(this)).sub(_before);
@@ -148,40 +210,14 @@ contract MyStrategy is BaseStrategy {
         (uint256 governancePerformanceFee, uint256 strategistPerformanceFee) =
             _processPerformanceFees(earned);
 
-        // TODO: If you are harvesting a reward token you're not compounding
-        // You probably still want to capture fees for it
-        // // Process Sushi rewards if existing
-        // if (sushiAmount > 0) {
-        //     // Process fees on Sushi Rewards
-        //     // NOTE: Use this to receive fees on the reward token
-        //     _processRewardsFees(sushiAmount, SUSHI_TOKEN);
-
-        //     // Transfer balance of Sushi to the Badger Tree
-        //     // NOTE: Send reward to badgerTree
-        //     uint256 sushiBalance = IERC20Upgradeable(SUSHI_TOKEN).balanceOf(address(this));
-        //     IERC20Upgradeable(SUSHI_TOKEN).safeTransfer(badgerTree, sushiBalance);
-        //
-        //     // NOTE: Signal the amount of reward sent to the badger tree
-        //     emit TreeDistribution(SUSHI_TOKEN, sushiBalance, block.number, block.timestamp);
-        // }
+        // Stake balance of want
+        stakingContract.stake(IERC20Upgradeable(want).balanceOf(address(this)));
 
         /// @dev Harvest event that every strategy MUST have, see BaseStrategy
         emit Harvest(earned, block.number);
 
         /// @dev Harvest must return the amount of want increased
         return earned;
-    }
-
-    // Alternative Harvest with Price received from harvester, used to avoid exessive front-running
-    function harvest(uint256 price)
-        external
-        whenNotPaused
-        returns (uint256 harvested)
-    {}
-
-    /// @dev Rebalance, Compound or Pay off debt here
-    function tend() external whenNotPaused {
-        _onlyAuthorizedActors();
     }
 
     /// ===== Internal Helper Functions =====
