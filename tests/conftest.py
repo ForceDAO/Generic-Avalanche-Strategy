@@ -184,3 +184,7 @@ def settKeeper(vault):
 @pytest.fixture
 def strategyKeeper(strategy):
     return accounts.at(strategy.keeper(), force=True)
+
+@pytest.fixture
+def governance(strategy):
+    return accounts.at(strategy.governance(), force=True)

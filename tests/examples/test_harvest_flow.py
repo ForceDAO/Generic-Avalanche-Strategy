@@ -102,7 +102,7 @@ def test_single_user_harvest_flow(
 
 
 def test_migrate_single_user(
-    deployer, vault, sett, controller, strategy, want, strategist
+    deployer, vault, sett, controller, strategy, want, strategist, governance
 ):
     # Setup
     randomUser = accounts[6]
@@ -133,7 +133,7 @@ def test_migrate_single_user(
     with brownie.reverts():
         controller.withdrawAll(strategy.want(), {"from": randomUser})
 
-    controller.withdrawAll(strategy.want(), {"from": deployer})
+    controller.withdrawAll(strategy.want(), {"from": governance})
 
     after = {"settWant": want.balanceOf(sett), "stratWant": strategy.balanceOf()}
 
