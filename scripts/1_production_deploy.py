@@ -7,10 +7,9 @@ from brownie import (
     SettV3,
     AdminUpgradeabilityProxy,
     Controller,
-    BadgerRegistry,
 )
 
-from config import WANT, PROTECTED_TOKENS, FEES, REGISTRY
+from config import WANT, PROTECTED_TOKENS, FEES
 
 from helpers.constants import AddressZero
 
@@ -35,12 +34,12 @@ def main():
     dev = connect_account()
 
     # Get actors from registry
-    registry = BadgerRegistry.at(REGISTRY)
 
-    strategist = registry.get("governance")
-    guardian = registry.get("guardian")
-    keeper = registry.get("keeper")
-    proxyAdmin = registry.get("proxyAdmin")
+    strategist = "0xB88cADD880356e7DaB0642651308E95791177ac7"
+    guardian = "0x324fc42795c513Ded0376f777e5Bf71129E268e7"
+    keeper = "0xB723f5f8874DE10F872b0A7fC27B685524222a34"
+    proxyAdmin = "0x8EecD09E9936CF983971B9f466D8d9efeA02591d"
+    governance = "0x3323cdA0D182b5D5165ba24580f1984AF861bEeC"
 
     assert strategist != AddressZero
     assert guardian != AddressZero
@@ -48,7 +47,14 @@ def main():
     assert proxyAdmin != AddressZero
 
     # Deploy controller
-    controller = deploy_controller(dev, proxyAdmin)
+    controller = deploy_controller(
+        dev, 
+        proxyAdmin,
+        dev.address,
+        strategist,
+        keeper,
+        governance,
+    )
 
     # Deploy Vault
     vault = deploy_vault(
@@ -75,18 +81,16 @@ def main():
     wire_up_test_controller(controller, vault, strategy, dev)
 
 
-def deploy_controller(dev, proxyAdmin):
+def deploy_controller(dev, proxyAdmin, governance, strategist, keeper, rewards):
 
-    controller_logic = Controller.at(
-        "0x01d10fdc6b484BE380144dF12EB6C75387EfC49B"
-    )  # Controller Logic
+    controller_logic = Controller.deploy({"from": dev}) # Controller Logic
 
     # Deployer address will be used for all actors as controller will only be used for testing
     args = [
-        dev.address,
-        dev.address,
-        dev.address,
-        dev.address,
+        governance,
+        strategist,
+        keeper,
+        rewards,
     ]
 
     controller_proxy = AdminUpgradeabilityProxy.deploy(
@@ -123,9 +127,7 @@ def deploy_vault(controller, governance, keeper, guardian, dev, proxyAdmin):
 
     print("Vault Arguments: ", args)
 
-    vault_logic = SettV3.at(
-        "0xAF0B504BD20626d1fd57F8903898168FCE7ecbc8"
-    )  # SettV3 Logic
+    vault_logic = SettV3.deploy({"from": dev}) # SettV3 Logic
 
     vault_proxy = AdminUpgradeabilityProxy.deploy(
         vault_logic,

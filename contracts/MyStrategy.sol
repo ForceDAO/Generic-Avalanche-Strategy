@@ -24,21 +24,13 @@ contract MyStrategy is BaseStrategy {
   // address public want // Inherited from BaseStrategy, the token the strategy wants, swaps into and tries to grow
   address public staking; // Token we provide liquidity with
   address public reward; // Token we farm and swap to want / lpComponent
+  address public token1; // First token of the LP pair in matter
+  address public token2; // Second token of the LP pair in matter
+
   IStakingRewards public stakingContract;
 
   address public constant PANGOLIN_ROUTER =
     0xE54Ca86531e17Ef3616d22Ca28b0D458b6C89106;
-
-  address public constant WAVAX = 0xB31f66AA3C1e785363F0875A1B74E27b85FD66c7;
-  address public constant DAI = 0xd586E7F844cEa2F87f50152665BCbc2C279D8d70;
-
-  // Used to signal to the Badger Tree that rewards where sent to it
-  event TreeDistribution(
-    address indexed token,
-    uint256 amount,
-    uint256 indexed blockNumber,
-    uint256 timestamp
-  );
 
   uint256 public sl;
   uint256 public constant MAX_BPS = 10000;
@@ -49,7 +41,7 @@ contract MyStrategy is BaseStrategy {
     address _controller,
     address _keeper,
     address _guardian,
-    address[3] memory _wantConfig,
+    address[5] memory _wantConfig,
     uint256[3] memory _feeConfig
   ) public initializer {
     __BaseStrategy_init(
@@ -64,6 +56,8 @@ contract MyStrategy is BaseStrategy {
     want = _wantConfig[0];
     staking = _wantConfig[1];
     reward = _wantConfig[2];
+    token1 = _wantConfig[3];
+    token2 = _wantConfig[4];
 
     performanceFeeGovernance = _feeConfig[0];
     performanceFeeStrategist = _feeConfig[1];
@@ -77,15 +71,15 @@ contract MyStrategy is BaseStrategy {
     /// @dev do one off approvals here
     IERC20Upgradeable(want).safeApprove(staking, type(uint256).max);
     IERC20Upgradeable(reward).safeApprove(PANGOLIN_ROUTER, type(uint256).max);
-    IERC20Upgradeable(WAVAX).safeApprove(PANGOLIN_ROUTER, type(uint256).max);
-    IERC20Upgradeable(DAI).safeApprove(PANGOLIN_ROUTER, type(uint256).max);
+    IERC20Upgradeable(token1).safeApprove(PANGOLIN_ROUTER, type(uint256).max);
+    IERC20Upgradeable(token2).safeApprove(PANGOLIN_ROUTER, type(uint256).max);
   }
 
   /// ===== View Functions =====
 
   // @dev Specify the name of the strategy
   function getName() external pure override returns (string memory) {
-    return "AVAX-DAI.e-Pangolin-Strategy";
+    return "Stablecoin-Pangolin-Strategy";
   }
 
   // @dev Specify the version of the Strategy, for upgrades
@@ -160,6 +154,12 @@ contract MyStrategy is BaseStrategy {
     } else {
       stakingContract.withdraw(_amount);
     }
+  }
+
+  /// @notice sets slippage tolerance for liquidity provision
+  function setSlippageTolerance(uint256 _s) external whenNotPaused {
+    _onlyGovernanceOrStrategist();
+    sl = _s;
   }
 
   /// @dev Harvest from strategy mechanics, realizing increase in underlying position
@@ -242,11 +242,11 @@ contract MyStrategy is BaseStrategy {
     if (rewardBalance > 0) {
       uint256 _half = rewardBalance.mul(5000).div(MAX_BPS);
 
-      // Swap rewarded PNG for DAI through WAVAX path
+      // Swap rewarded PNG for TOKEN2 through TOKEN1 path
       address[] memory path = new address[](3);
       path[0] = reward;
-      path[1] = WAVAX;
-      path[2] = DAI;
+      path[1] = token1;
+      path[2] = token2;
       IUniswapRouterV2(PANGOLIN_ROUTER).swapExactTokensForTokens(
         _half,
         0,
@@ -255,10 +255,10 @@ contract MyStrategy is BaseStrategy {
         now
       );
 
-      // Swap rewarded PNG for WAVAX
+      // Swap rewarded PNG for TOKEN1
       path = new address[](2);
       path[0] = reward;
-      path[1] = WAVAX;
+      path[1] = token1;
       IUniswapRouterV2(PANGOLIN_ROUTER).swapExactTokensForTokens(
         rewardBalance.sub(_half),
         0,
@@ -267,16 +267,16 @@ contract MyStrategy is BaseStrategy {
         now
       );
 
-      // Add liquidity for ibBTC-wBTC pool
-      uint256 _wavaxIn = balanceOfToken(WAVAX);
-      uint256 _daiIn = balanceOfToken(DAI);
+      // Add liquidity for token1-token2 pool
+      uint256 _token1In = balanceOfToken(token1);
+      uint256 _token2In = balanceOfToken(token2);
       IUniswapRouterV2(PANGOLIN_ROUTER).addLiquidity(
-        WAVAX,
-        DAI,
-        _wavaxIn,
-        _daiIn,
-        _wavaxIn.mul(sl).div(MAX_BPS),
-        _daiIn.mul(sl).div(MAX_BPS),
+        token1,
+        token2,
+        _token1In,
+        _token2In,
+        _token1In.mul(sl).div(MAX_BPS),
+        _token2In.mul(sl).div(MAX_BPS),
         address(this),
         now
       );

@@ -1,6 +1,7 @@
 from helpers.StrategyCoreResolver import StrategyCoreResolver
 from rich.console import Console
 from brownie import interface
+from config import TOKEN1, TOKEN2
 
 console = Console()
 
@@ -91,13 +92,13 @@ class StrategyResolver(StrategyCoreResolver):
         super().add_balances_snap(calls, entities)
         strategy = self.manager.strategy
 
-        dai = interface.IERC20(strategy.DAI())
-        wavax = interface.IERC20(strategy.WAVAX())
+        token1 = interface.IERC20(TOKEN1)
+        token2 = interface.IERC20(TOKEN2)
         png = interface.IERC20(strategy.reward())
 
 
-        calls = self.add_entity_balances_for_tokens(calls, "dai", dai, entities)
-        calls = self.add_entity_balances_for_tokens(calls, "wavax", wavax, entities)
+        calls = self.add_entity_balances_for_tokens(calls, "token1", token1, entities)
+        calls = self.add_entity_balances_for_tokens(calls, "token2", token2, entities)
         calls = self.add_entity_balances_for_tokens(calls, "png", png, entities)
 
 
