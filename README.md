@@ -1,5 +1,18 @@
 # Badger Strategy V1 Brownie Mix
 
+```
+Controller logic: 0xEa8567d84E3e54B32176418B4e0C736b56378961
+Controller: 0x599D92B453C010b1050d31C364f6ee17E819f193
+
+Vault logic: 0x3D8b8D4aD81Acf56e44DDEE068930d8860b4eF71
+Vault: 0x3D8b8D4aD81Acf56e44DDEE068930d8860b4eF71
+
+Strategy AVAX-Stable Logic: 0x5ddE67e4f0abD7a94E99C037A04A1946f9DbaA36
+Strategy AVAX-Stable: 0xA8ACEc8cb32e6dc14Fc4dBc4D218f4Cea5B90fE0
+```
+
+## Badger Mix V1 Overview
+
 - Video Introduction: https://youtu.be/FVbhgPYW_D0
 
 - Example Project: https://github.com/Badger-Finance/wBTC-AAVE-Rewards-Farm-Badger-V1-Strategy
@@ -45,15 +58,16 @@ pip install -r requirements.txt
 ```
 
 8. Run the following command to install the Avalanche main network:
+
 ```
 brownie networks add Avalanche avax-avash2 host=https://api.avax.network/ext/bc/C/rpc chainid=43112 explorer=https://cchain.explorer.avax.network/
 ```
 
 9. Run the following command to install the Avalanche fork network:
+
 ```
 brownie networks import network-config.yaml
 ```
-
 
 ## Basic Use
 
