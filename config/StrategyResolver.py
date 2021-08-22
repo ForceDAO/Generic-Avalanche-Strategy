@@ -95,9 +95,11 @@ class StrategyResolver(StrategyCoreResolver):
         wavax = interface.IERC20(strategy.WAVAX())
         png = interface.IERC20(strategy.reward())
 
+
         calls = self.add_entity_balances_for_tokens(calls, "dai", dai, entities)
         calls = self.add_entity_balances_for_tokens(calls, "wavax", wavax, entities)
         calls = self.add_entity_balances_for_tokens(calls, "png", png, entities)
+
 
         return calls
 

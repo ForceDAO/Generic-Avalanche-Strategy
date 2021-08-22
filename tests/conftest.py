@@ -188,3 +188,7 @@ def strategyKeeper(strategy):
 @pytest.fixture
 def governance(strategy):
     return accounts.at(strategy.governance(), force=True)
+
+@pytest.fixture(autouse=True)
+def isolation(fn_isolation):
+    pass
