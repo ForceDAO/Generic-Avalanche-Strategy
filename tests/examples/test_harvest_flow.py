@@ -79,7 +79,7 @@ def test_single_user_harvest_flow(
     if tendable:
         snap.settTend({"from": strategyKeeper})
 
-    chain.sleep(days(1))
+    chain.sleep(days(.1))
     chain.mine()
 
     with brownie.reverts("onlyAuthorizedActors"):
