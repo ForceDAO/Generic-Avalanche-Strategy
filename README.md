@@ -1,34 +1,15 @@
-# Badger Strategy V1 Brownie Mix
+# Generic Pangolin Rewards Strategy
 
 ```
 Controller logic: 0xEa8567d84E3e54B32176418B4e0C736b56378961
 Controller: 0x599D92B453C010b1050d31C364f6ee17E819f193
 
-Vault logic: 0x3D8b8D4aD81Acf56e44DDEE068930d8860b4eF71
+Vault logic: 0x663EfC293ca8d8DD6355AE6E99b71352BED9E895
 Vault: 0x3D8b8D4aD81Acf56e44DDEE068930d8860b4eF71
 
 Strategy AVAX-Stable Logic: 0x5ddE67e4f0abD7a94E99C037A04A1946f9DbaA36
 Strategy AVAX-Stable: 0xA8ACEc8cb32e6dc14Fc4dBc4D218f4Cea5B90fE0
 ```
-
-## Badger Mix V1 Overview
-
-- Video Introduction: https://youtu.be/FVbhgPYW_D0
-
-- Example Project: https://github.com/Badger-Finance/wBTC-AAVE-Rewards-Farm-Badger-V1-Strategy
-- Full Project Walkthrough: https://www.youtube.com/watch?v=lTb0RFJJx2k
-- 1-1 Mentoring (Valid throughout HackMoney and Gitcoin Round 10): https://calendly.com/alex-entreprenerd/badger-hackmoney-1-1
-
-## What you'll find here
-
-- Basic Solidity Smart Contract for creating your own Badger Strategy ([`contracts/MyStrategy.sol`](contracts/MyStrategy.sol))
-
-- Interfaces for some of the most used DeFi protocols on ethereum mainnet. ([`interfaces`](interfaces))
-- Dependencies for OpenZeppelin and other libraries. ([`deps`](deps))
-
-- Sample test suite that runs on mainnet fork. ([`tests`](tests))
-
-This mix is configured for use with [Ganache](https://github.com/trufflesuite/ganache-cli) on a [forked mainnet](https://eth-brownie.readthedocs.io/en/stable/network-management.html#using-a-forked-development-network).
 
 ## Installation and Setup
 
