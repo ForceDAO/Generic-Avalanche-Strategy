@@ -38,13 +38,7 @@ This mix is configured for use with [Ganache](https://github.com/trufflesuite/ga
 
 3. [Install Brownie](https://eth-brownie.readthedocs.io/en/stable/install.html) & [Ganache-CLI](https://github.com/trufflesuite/ganache-cli), if you haven't already.
 
-4. Copy the `.env.example` file, and rename it to `.env`
-
-5. Sign up for [Infura](https://infura.io/) and generate an API key. Store it in the `WEB3_INFURA_PROJECT_ID` environment variable.
-
-6. Sign up for [Etherscan](www.etherscan.io) and generate an API key. This is required for fetching source codes of the mainnet contracts we will be interacting with. Store the API key in the `ETHERSCAN_TOKEN` environment variable.
-
-7. Install the dependencies in the package
+4. Install the dependencies in the package
 
 ```
 ## Javascript dependencies
@@ -57,13 +51,13 @@ source venv/bin/activate
 pip install -r requirements.txt
 ```
 
-8. Run the following command to install the Avalanche main network:
+5. Run the following command to install the Avalanche main network:
 
 ```
 brownie networks add Avalanche avax-avash2 host=https://api.avax.network/ext/bc/C/rpc chainid=43112 explorer=https://cchain.explorer.avax.network/
 ```
 
-9. Run the following command to install the Avalanche fork network:
+6. Run the following command to install the Avalanche fork network:
 
 ```
 brownie networks import network-config.yaml
