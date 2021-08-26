@@ -135,10 +135,7 @@ contract MyStrategy is BaseStrategy {
 
   /// @dev utility function to withdraw everything for migration
   function _withdrawAll() internal override {
-    // Get rewards
-    stakingContract.getReward();
-    // Converts outstanding rewards to want
-    _rewardToLp();
+    _processFees();
     // Withdraws total want position from stakingContract
     stakingContract.withdraw(balanceOfPool());
 
@@ -150,7 +147,7 @@ contract MyStrategy is BaseStrategy {
     uint256 _totalWant = balanceOfPool();
     // Due to rounding errors on the Controller, the amount may be slightly higher than the available amount in edge cases.
     if (_amount > _totalWant) {
-      stakingContract.withdraw(_totalWant);
+      _withdrawAll();
     } else {
       stakingContract.withdraw(_amount);
     }
@@ -166,6 +163,19 @@ contract MyStrategy is BaseStrategy {
   function harvest() public whenNotPaused returns (uint256 harvested) {
     _onlyAuthorizedActors();
 
+    uint256 earned = _processFees();
+
+    // Stake balance of want
+    uint256 wantBalance = IERC20Upgradeable(want).balanceOf(address(this));
+    if (wantBalance > 0) {
+      stakingContract.stake(wantBalance);
+    }
+
+    /// @dev Harvest event that every strategy MUST have, see BaseStrategy
+    emit Harvest(earned, block.number);
+  }
+
+  function _processFees() internal returns (uint256 earned) {
     uint256 _before = IERC20Upgradeable(want).balanceOf(address(this));
 
     // Get rewards
@@ -178,28 +188,6 @@ contract MyStrategy is BaseStrategy {
       IERC20Upgradeable(want).balanceOf(address(this)).sub(_before);
 
     /// @notice Keep this in so you get paid!
-    _processPerformanceFees(earned);
-
-    // Stake balance of want
-    uint256 wantBalance = IERC20Upgradeable(want).balanceOf(address(this));
-    if (wantBalance > 0) {
-      stakingContract.stake(wantBalance);
-    }
-
-    /// @dev Harvest event that every strategy MUST have, see BaseStrategy
-    emit Harvest(earned, block.number);
-
-    /// @dev Harvest must return the amount of want increased
-    return earned;
-  }
-
-  /// ===== Internal Helper Functions =====
-
-  /// @dev used to manage the governance and strategist fee, make sure to use it to get paid!
-  function _processPerformanceFees(uint256 _amount)
-    internal
-    returns (uint256 governancePerformanceFee, uint256 strategistPerformanceFee)
-  {
     governancePerformanceFee = _processFee(
       want,
       _amount,
@@ -213,28 +201,15 @@ contract MyStrategy is BaseStrategy {
       performanceFeeStrategist,
       strategist
     );
+
+    /// @dev Harvest must return the amount of want increased
+    return earned - governancePerformanceFee - strategistPerformanceFee;
   }
 
+  /// ===== Internal Helper Functions =====
+
+  /// @dev used to manage the governance and strategist fee, make sure to use it to get paid!
   /// @dev used to manage the governance and strategist fee on earned rewards, make sure to use it to get paid!
-  function _processRewardsFees(uint256 _amount, address _token)
-    internal
-    returns (uint256 governanceRewardsFee, uint256 strategistRewardsFee)
-  {
-    governanceRewardsFee = _processFee(
-      _token,
-      _amount,
-      performanceFeeGovernance,
-      IController(controller).rewards()
-    );
-
-    strategistRewardsFee = _processFee(
-      _token,
-      _amount,
-      performanceFeeStrategist,
-      strategist
-    );
-  }
-
   function _rewardToLp() internal {
     // Get rewards balance
     uint256 rewardBalance = IERC20Upgradeable(reward).balanceOf(address(this));
