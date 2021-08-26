@@ -160,7 +160,7 @@ contract MyStrategy is BaseStrategy {
   }
 
   /// @dev Harvest from strategy mechanics, realizing increase in underlying position
-  function harvest() public whenNotPaused returns (uint256 harvested) {
+  function harvest() public whenNotPaused returns (uint256) {
     _onlyAuthorizedActors();
 
     uint256 earned = _processFees();
@@ -173,9 +173,10 @@ contract MyStrategy is BaseStrategy {
 
     /// @dev Harvest event that every strategy MUST have, see BaseStrategy
     emit Harvest(earned, block.number);
+    return earned;
   }
 
-  function _processFees() internal returns (uint256 earned) {
+  function _processFees() internal returns (uint256) {
     uint256 _before = IERC20Upgradeable(want).balanceOf(address(this));
 
     // Get rewards
@@ -188,16 +189,16 @@ contract MyStrategy is BaseStrategy {
       IERC20Upgradeable(want).balanceOf(address(this)).sub(_before);
 
     /// @notice Keep this in so you get paid!
-    governancePerformanceFee = _processFee(
+    uint256 governancePerformanceFee = _processFee(
       want,
-      _amount,
+      earned,
       performanceFeeGovernance,
       IController(controller).rewards()
     );
 
-    strategistPerformanceFee = _processFee(
+    uint256 strategistPerformanceFee = _processFee(
       want,
-      _amount,
+      earned,
       performanceFeeStrategist,
       strategist
     );
