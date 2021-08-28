@@ -84,7 +84,7 @@ contract MyStrategy is BaseStrategy {
 
   // @dev Specify the version of the Strategy, for upgrades
   function version() external pure returns (string memory) {
-    return "1.0";
+    return "1.1";
   }
 
   /// @dev Balance of want currently held in strategy positions
