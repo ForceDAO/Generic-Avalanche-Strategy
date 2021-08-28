@@ -137,8 +137,20 @@ contract MyStrategy is BaseStrategy {
   function _withdrawAll() internal override {
     // Get rewards
     stakingContract.getReward();
+
+    // Get want before converting to LP
+    uint256 _before = IERC20Upgradeable(want).balanceOf(address(this));
+
     // Converts outstanding rewards to want
     _rewardToLp();
+
+    // Get want after converting to LP
+    uint256 earned =
+      IERC20Upgradeable(want).balanceOf(address(this)).sub(_before);
+
+    // Process performance fees for strategist and governance
+    _processPerformanceFees(earned);
+
     // Withdraws total want position from stakingContract
     stakingContract.withdraw(balanceOfPool());
 

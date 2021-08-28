@@ -23,10 +23,9 @@ def deployed():
     Deploys, vault, controller and strats and wires them up for you to test
     """
     deployer = accounts[0]
-
-    strategist = deployer
-    keeper = deployer
-    guardian = deployer
+    strategist = accounts[1]
+    keeper = accounts[2]
+    guardian = accounts[3]
 
     governance = accounts.at(BADGER_DEV_MULTISIG, force=True)
 
@@ -46,7 +45,7 @@ def deployed():
     )
 
     sett.unpause({"from": governance})
-    controller.setVault(WANT, sett)
+    controller.setVault(WANT, sett, {"from": governance})
 
     ## TODO: Add guest list once we find compatible, tested, contract
     # guestList = VipCappedGuestListWrapperUpgradeable.deploy({"from": deployer})
@@ -82,7 +81,7 @@ def deployed():
     ## Wire up Controller to Strart
     ## In testing will pass, but on live it will fail
     controller.approveStrategy(WANT, strategy, {"from": governance})
-    controller.setStrategy(WANT, strategy, {"from": deployer})
+    controller.setStrategy(WANT, strategy, {"from": governance})
 
 
     ## Uniswap some tokens here

@@ -103,7 +103,7 @@ def test_single_user_harvest_flow(
 
 
 def test_migrate_single_user(
-    deployer, vault, sett, controller, strategy, want, strategist, governance
+    deployer, vault, sett, controller, strategy, want, strategist, governance, settKeeper
 ):
     # Setup
     randomUser = accounts[6]
@@ -121,7 +121,7 @@ def test_migrate_single_user(
     chain.sleep(15)
     chain.mine()
 
-    sett.earn({"from": strategist})
+    sett.earn({"from": settKeeper})
 
     chain.snapshot()
 
@@ -129,18 +129,20 @@ def test_migrate_single_user(
     chain.sleep(days(.1))
     chain.mine()
 
-    before = {"settWant": want.balanceOf(sett), "stratWant": strategy.balanceOf()}
+    before = {"settWant": want.balanceOf(sett), "stratWant": strategy.balanceOf(), "strategistWant": want.balanceOf(strategist), "govWant": want.balanceOf(governance)}
 
     with brownie.reverts():
         controller.withdrawAll(strategy.want(), {"from": randomUser})
 
     controller.withdrawAll(strategy.want(), {"from": governance})
 
-    after = {"settWant": want.balanceOf(sett), "stratWant": strategy.balanceOf()}
+    after = {"settWant": want.balanceOf(sett), "stratWant": strategy.balanceOf(), "strategistWant": want.balanceOf(strategist), "govWant": want.balanceOf(governance)}
 
     assert after["settWant"] > before["settWant"]
     assert after["stratWant"] < before["stratWant"]
     assert after["stratWant"] == 0
+    assert after["strategistWant"] > before["strategistWant"]
+    assert after["govWant"] > before["govWant"]
 
     # Test tend only
     if strategy.isTendable():
@@ -151,18 +153,21 @@ def test_migrate_single_user(
 
         strategy.tend({"from": deployer})
 
-        before = {"settWant": want.balanceOf(sett), "stratWant": strategy.balanceOf()}
+        before = {"settWant": want.balanceOf(sett), "stratWant": strategy.balanceOf(), "strategistWant": want.balanceOf(strategist), "govWant": want.balanceOf(governance)}
 
         with brownie.reverts():
             controller.withdrawAll(strategy.want(), {"from": randomUser})
 
-        controller.withdrawAll(strategy.want(), {"from": deployer})
+        controller.withdrawAll(strategy.want(), {"from": governance})
 
-        after = {"settWant": want.balanceOf(sett), "stratWant": strategy.balanceOf()}
+        after = {"settWant": want.balanceOf(sett), "stratWant": strategy.balanceOf(), "strategistWant": want.balanceOf(strategist), "govWant": want.balanceOf(governance)}
 
         assert after["settWant"] > before["settWant"]
         assert after["stratWant"] < before["stratWant"]
         assert after["stratWant"] == 0
+        assert after["strategistWant"] > before["strategistWant"]
+        assert after["govWant"] > before["govWant"]
+
 
     # Test harvest, with tend if tendable
     chain.revert()
@@ -180,21 +185,25 @@ def test_migrate_single_user(
         "settWant": want.balanceOf(sett),
         "stratWant": strategy.balanceOf(),
         "rewardsWant": want.balanceOf(controller.rewards()),
+        "strategistWant": want.balanceOf(strategist),
+        "govWant": want.balanceOf(governance)
     }
 
     with brownie.reverts():
         controller.withdrawAll(strategy.want(), {"from": randomUser})
 
-    controller.withdrawAll(strategy.want(), {"from": deployer})
+    controller.withdrawAll(strategy.want(), {"from": governance})
 
-    after = {"settWant": want.balanceOf(sett), "stratWant": strategy.balanceOf()}
+    after = {"settWant": want.balanceOf(sett), "stratWant": strategy.balanceOf(), "strategistWant": want.balanceOf(strategist), "govWant": want.balanceOf(governance)}
 
     assert after["settWant"] > before["settWant"]
     assert after["stratWant"] < before["stratWant"]
     assert after["stratWant"] == 0
+    assert after["strategistWant"] > before["strategistWant"]
+    assert after["govWant"] > before["govWant"]
 
 
-def test_withdraw_other(deployer, sett, controller, strategy, want):
+def test_withdraw_other(deployer, sett, controller, strategy, want, governance):
     """
     - Controller should be able to withdraw other tokens
     - Controller should not be able to withdraw core tokens
@@ -214,15 +223,15 @@ def test_withdraw_other(deployer, sett, controller, strategy, want):
     chain.sleep(15)
     chain.mine()
 
-    sett.earn({"from": deployer})
+    sett.earn({"from": governance})
 
     chain.sleep(days(0.1))
     chain.mine()
 
     if strategy.isTendable():
-        strategy.tend({"from": deployer})
+        strategy.tend({"from": governance})
 
-    strategy.harvest({"from": deployer})
+    strategy.harvest({"from": governance})
 
     chain.sleep(days(0.1))
     chain.mine()
@@ -237,10 +246,10 @@ def test_withdraw_other(deployer, sett, controller, strategy, want):
     protectedTokens = strategy.getProtectedTokens()
     for token in protectedTokens:
         with brownie.reverts():
-            controller.inCaseStrategyTokenGetStuck(strategy, token, {"from": deployer})
+            controller.inCaseStrategyTokenGetStuck(strategy, token, {"from": governance})
 
     # Should send balance of non-protected token to sender
-    controller.inCaseStrategyTokenGetStuck(strategy, mockToken, {"from": deployer})
+    controller.inCaseStrategyTokenGetStuck(strategy, mockToken, {"from": governance})
 
     with brownie.reverts():
         controller.inCaseStrategyTokenGetStuck(
@@ -251,7 +260,7 @@ def test_withdraw_other(deployer, sett, controller, strategy, want):
 
 
 def test_single_user_harvest_flow_remove_fees(
-    deployer, vault, sett, controller, strategy, want
+    deployer, vault, sett, controller, strategy, want, governance, strategyKeeper, settKeeper
 ):
     # Setup
     randomUser = accounts[6]
@@ -268,13 +277,13 @@ def test_single_user_harvest_flow_remove_fees(
     snap.settDeposit(depositAmount, {"from": deployer})
 
     # Earn
-    snap.settEarn({"from": deployer})
+    snap.settEarn({"from": settKeeper})
 
     chain.sleep(days(0.1))
     chain.mine()
 
     if tendable:
-        snap.settTend({"from": deployer})
+        snap.settTend({"from": strategyKeeper})
 
     chain.sleep(1)
     chain.mine()
@@ -282,7 +291,7 @@ def test_single_user_harvest_flow_remove_fees(
     with brownie.reverts("onlyAuthorizedActors"):
         strategy.harvest({"from": randomUser})
 
-    snap.settHarvest({"from": deployer})
+    snap.settHarvest({"from": governance})
 
     ## NOTE: Some strats do not do this, change accordingly
     assert want.balanceOf(controller.rewards()) > 0
@@ -291,14 +300,14 @@ def test_single_user_harvest_flow_remove_fees(
     chain.mine()
 
     if tendable:
-        snap.settTend({"from": deployer})
+        snap.settTend({"from": governance})
 
     chain.sleep(days(.1))
     chain.mine()
 
     staking = interface.IStakingRewards(STAKING)
     print("earned", staking.earned(strategy.address))
-    snap.settHarvest({"from": deployer})
+    snap.settHarvest({"from": strategyKeeper})
 
     snap.settWithdrawAll({"from": deployer})
 
