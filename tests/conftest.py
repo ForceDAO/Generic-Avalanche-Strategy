@@ -73,8 +73,8 @@ def deployed():
     lpComponent = interface.IERC20(STAKING)
     rewardToken = interface.IERC20(REWARD_TOKEN)
 
-    wavax = interface.IERC20("0xB31f66AA3C1e785363F0875A1B74E27b85FD66c7")
-    dai = interface.IERC20("0xd586E7F844cEa2F87f50152665BCbc2C279D8d70")
+    # wavax = interface.IERC20("0xB31f66AA3C1e785363F0875A1B74E27b85FD66c7")
+    # dai = interface.IERC20("0xc7198437980c041c805A1EDcbA50c1Ce5db95118")
 
 
 

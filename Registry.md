@@ -15,10 +15,12 @@ Controller: 0x599D92B453C010b1050d31C364f6ee17E819f193
 # Vault (Proxy)
 
 Pangolin-AVAX-DAI.e Vault: 0x3D8b8D4aD81Acf56e44DDEE068930d8860b4eF71
+Pangolin-AVAX-USDT.e Vault: 0x7A2744cE2585Acfe3e1D765bd435ed69Ed970cac
 
 # Strategy (Proxy)
 
 Pangolin-AVAX-DAI.e Strategy: 0xA8ACEc8cb32e6dc14Fc4dBc4D218f4Cea5B90fE0
+Pangolin-AVAX-USDT.e Strategy: 0xaB4BcDb1Bf33534f052Fa3D2DF2c7F3E1965A4Af
 
 # Vault Configurations:
 

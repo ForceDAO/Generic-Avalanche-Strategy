@@ -47,14 +47,16 @@ def main():
     assert proxyAdmin != AddressZero
 
     # Deploy controller
-    controller = deploy_controller(
-        dev, 
-        proxyAdmin,
-        dev.address,
-        strategist,
-        keeper,
-        governance,
-    )
+    # controller = deploy_controller(
+    #     dev, 
+    #     proxyAdmin,
+    #     dev.address,
+    #     strategist,
+    #     keeper,
+    #     governance,
+    # )
+
+    controller = Controller.at("0x599D92B453C010b1050d31C364f6ee17E819f193")
 
     # Deploy Vault
     vault = deploy_vault(
@@ -127,7 +129,10 @@ def deploy_vault(controller, governance, keeper, guardian, dev, proxyAdmin):
 
     print("Vault Arguments: ", args)
 
-    vault_logic = SettV3.deploy({"from": dev}) # SettV3 Logic
+    # USE FOR FIRST DEPLOYMENT ONLY
+    # vault_logic = SettV3.deploy({"from": dev}) # SettV3 Logic
+
+    vault_logic = SettV3.at("0x663EfC293ca8d8DD6355AE6E99b71352BED9E895")
 
     vault_proxy = AdminUpgradeabilityProxy.deploy(
         vault_logic,
@@ -168,7 +173,11 @@ def deploy_strategy(
 
     print("Strategy Arguments: ", args)
 
-    strat_logic = MyStrategy.deploy({"from": dev})
+    # USE FOR FIRST DEPLOYMENT ONLY
+    # strat_logic = MyStrategy.deploy({"from": dev})
+
+    strat_logic = MyStrategy.at("0x3811448236d4274705b81C6ab99d617bfab617Cd")
+
     time.sleep(sleep_between_tx)
 
     strat_proxy = AdminUpgradeabilityProxy.deploy(
