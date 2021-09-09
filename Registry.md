@@ -7,6 +7,7 @@ A collection of contract addresses and EOAs used in the life cycle of this strat
 Controller logic: 0xEa8567d84E3e54B32176418B4e0C736b56378961<br/>
 Vault logic: 0x663EfC293ca8d8DD6355AE6E99b71352BED9E895<br/>
 Stablecoin-Pangolin-Strategy Logic: 0x3811448236d4274705b81C6ab99d617bfab617Cd<br/>
+Guestlist logic: 0x7b6bfb88904e4b3a6d239d5ed8adf557b22c10fc<br/>
 
 # Controller (Proxy)
 
@@ -21,6 +22,11 @@ Pangolin-AVAX-USDT.e Vault: 0x7A2744cE2585Acfe3e1D765bd435ed69Ed970cac
 
 Pangolin-AVAX-DAI.e Strategy: 0xA8ACEc8cb32e6dc14Fc4dBc4D218f4Cea5B90fE0<br/>
 Pangolin-AVAX-USDT.e Strategy: 0xaB4BcDb1Bf33534f052Fa3D2DF2c7F3E1965A4Af
+
+# Guestlist (Proxy)
+
+Pangolin-AVAX-DAI.e Vault's Guestlist: 0x539f47C9e47dF34e54670d27AeF7aF9d71EfE808<br/>
+Pangolin-AVAX-USDT.e Vault's Guestlist: 0x0E121b3881Ac4c50C67a01D5b76c0c3DA84A258e
 
 # Vault Configurations:
 
